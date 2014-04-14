@@ -12,21 +12,28 @@ def index(request):
 def send(request):
 	print("Request received!")
 	if request.method=='POST':
-		print("POST success!")
+
 		if 'file' in request.FILES:
 			fd = request.FILES['file']
 			filename = fd.name
-			print filename
-			fl = open(filename, 'wb')
-			print("File opened!")
+			path = Path(request.FILES['path'].read())
+			user = request.FILES['user'].read()+'/'
+
+			fl = open('folders/' + user + filename, 'wb')
 			data = fd.read()
 			fl.write(data)
-			print("File read!")
 			fl.close
+
 	return HttpResponse("<h1> Send </h1>")
 
+
 def remove(request):
-	return HttpResponse("<h1> Remove </h1>")
+	return HttpResponse("")
+
 
 def update(request):
 	return HttpResponse("<h1> Update </h1>")
+
+
+def login(request):
+	return HttpResponse("<h1> Login </h1>")
