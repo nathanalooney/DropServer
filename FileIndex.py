@@ -1,7 +1,8 @@
 __author__ = 'Kevin'
 
 import fileObj
-class FileIndex:
+import dirObj
+class File_Index:
 
     tempIdBase = 0
     def __init__(self, username, basePath):
@@ -15,4 +16,16 @@ class FileIndex:
 
     def addDir(self, dirObj):
         self.listDirs.append(dirObj)
+    def getUsername(self):
+        return self.username
+
+    def toDict(self):
+        fil = []
+        for f in self.listFiles:
+            fil.append(f.toDict())
+        dir = []
+        for di in self.listDirs:
+            dir.append(di.toDict())
+        d = {'username': self.username, 'basepath': str(self.basePath), 'files': fil, 'dirs': dir}
+        return d
 
