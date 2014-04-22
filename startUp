@@ -1,6 +1,6 @@
 __author__ = 'Kevin'
 import pickle
-import FileIndex
+import fileIndex
 import fileObj
 import dirObj
 import os
