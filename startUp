@@ -9,7 +9,7 @@ import json
 def loadIndex():
     direct = os.getcwd
     #base = os.path.abspath(direct)
-    fi = FileIndex.File_Index('kevin', direct)
+    fi = fileIndex.File_Index('kevin', direct)
 
     savData = open(r'D:\OneDir\data.pkl', 'wb')
     pickle.dump(fi, savData)
@@ -57,7 +57,7 @@ def jsonToIndex(jstr):
     dict = json.loads(jstr)
     un = dict['username']
     bp = dict['basepath']
-    f = FileIndex.File_Index(dict['username'], dict['basepath'])
+    f = fileIndex.File_Index('kevin' ,bp)
     for files in dict['files']:
         newfil = fileObj.fileObj(files['name'],files['path'],files['time'],files['id'])
         f.addFile(newfil)
