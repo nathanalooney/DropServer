@@ -9,7 +9,19 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 #from syncfolder.models import Users
 import os
+import fileObj
 class MyHandler(FileSystemEventHandler):
+
+    def on_created(self, event):
+        statbuf = os.stat(event.src_path)
+        t = statbuf.st_mtime
+        f = fileObj.fileObj(event.src_path,t,3)
+        jstring = json.dumps(f.toDict())
+        files = {'type': 'created', 'fileObj': jstring, 'data': open(event.src_path, 'rb')}
+        #dict = json.loads(jstr)
+        #newfil = fileObj.fileObj(files['path'],files['time'],files['id'])
+        r = requests.post('http://localhost:8000/syncfolder/send', files = files)
+        print "Sent successfully!"
 
 
     def on_modified(self, event):
