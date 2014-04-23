@@ -107,19 +107,38 @@ def systemClientCompare(clientIndex, systemDict):
 			print 'this is filefound: ' + str(ff)
 			if ff['localTime'] < fils['modTime']:
 				ff['localTime'] = fils['modTime']
-				updatelist.append(ff)
+				updatelist.append(ff['ID'])
 	return {'dcreatelist': dcreatelist, 'fcreatelist': fcreatelist, 'updatelist': updatelist}
 
-def clientServerCompare(clientIndex, serverIndex, deletelist):
+def clientServerCompare(clientIndex, serverIndex, deletelist, updatelist):
 	largeID = 0
+	clientPullList = []
 	for d in serverIndex['dirList']:
 		if d['ID'] > largeID:
 			largeID = d['ID']
 		dd = next((item for item in clientIndex['dirList'] if item['ID'] == d['ID']),None)
-		#if dd is None:
+		if dd is None:
+			if d['ID'] not in deletelist:
+				#create the directory here, dont actually need to pull it
+				clientIndex['dirList'].append({'path':d['path'], 'ID':d['ID']})
+	for f in serverIndex['fileList']:
+		if f['ID'] > largeID:
+			largeID = f['ID']
+		ff = next((item for item in clientIndex['fileList'] if item['ID'] == d['ID']),None)
+		if ff is None:
+			if f['ID'] not in deletelist:
+				clientIndex['fileList'].append({'path':f['path'], 'ID':f['ID'], 'serverTime':f['time'], 'localTime':f['time']})
+				clientPullList.append(f['ID'])
+		else:
+			if f['time'] > ff['serverTime']:
+				clientPullList.append(f['ID'])
+				ff['serverTime'] = f['time'] #when pull down update the local time then
+				if f['ID'] in updatelist:
+					updatelist.remove(f['ID'])
 			
-
-
+		
+				
+			
 username = 'kevin'
 p = '/home/student/html'
 sysD = getSystemDir(p)
