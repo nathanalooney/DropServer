@@ -1,4 +1,12 @@
 __author__ = 'Kevin'
+
+#TODO fix file paths - all in client absolute right now
+# figure out exactly how to do the savepath
+# connection to sever/get serverIndex
+# send all posts to server from queue
+#	with this make sure on pulls to change local time on client index and resave
+# make sure lists are being passed by reference and keeping value
+
 import pickle
 import os
 import json
@@ -54,24 +62,30 @@ def pumpServerIndexTest(path, username, sysDir):
 	return f
 
 
-def getClientIndex(username):
+def getClientIndex(username, savePath):
 	try: 
 		direct = '/home/student/saveData'
-		file2 = open(str(direct)+str(username)+'.pkl', 'rb')
+		#file2 = open(str(direct)+str(username)+'.pkl', 'rb')
+		file2 = open(savePath+str(username)+'.pkl', 'rb')
     		newIndex = pickle.load(file2)
     		file2.close()
 		return newIndex
 	except IOError:
     		direct = os.getcwd
 		fi = {'username':username, 'fileList': [], 'dirList': []}
-    		savData = open(str(direct)+str(username)+'.pkl', 'wb')
+    		savData = open(savePath+str(username)+'.pkl', 'wb')
     		pickle.dump(fi, savData)
     		savData.close()
-		file2 = open(r'D:\OneDir\data.pkl', 'rb')
+		file2 = open(savePath+str(username)+'.pkl', 'rb')
     		newIndex = pickle.load(file2)
     		file2.close()
 		return newIndex
-		print 'nothing here'
+
+def saveClientIndex(clientIndex, username, savePath):
+	savData = open(savePath+str(username)+'.pkl', 'wb')
+    	pickle.dump(clientIndex, savData)
+    	savData.close()
+		
     	
 def createDeleteList(clientIndex):
 	deletelist = []
@@ -97,20 +111,20 @@ def systemClientCompare(clientIndex, systemDict):
 		ff = next((item for item in clientIndex['dirList'] if item['path'] == dirs['path']),None)
 		if ff is None:
 			print 'directory not found: ' + str(dirs['path'])
-			dcreatelist.append(dirs)
+			dcreatelist.append({'path': dirs['path']})
 	for fils in systemDict['files']:
 		ff = next((item for item in clientIndex['fileList'] if item['path'] == fils['path']),None)
 		if ff is None:
 			print 'directory not found: ' + str(fils['path'])
-			fcreatelist.append(fils)
+			fcreatelist.append({'path':fils['path'], 'time':fils['modTime']})
 		else:
 			print 'this is filefound: ' + str(ff)
 			if ff['localTime'] < fils['modTime']:
 				ff['localTime'] = fils['modTime']
-				updatelist.append(ff['ID'])
+				updatelist.append({'ID': ff['ID'], 'time': ff['localTime'], 'path': ff['path']})
 	return {'dcreatelist': dcreatelist, 'fcreatelist': fcreatelist, 'updatelist': updatelist}
 
-def clientServerCompare(clientIndex, serverIndex, deletelist, updatelist):
+def clientServerCompare(clientIndex, serverIndex, deletelist, updatelist, dcreatelist, fcreatelist):
 	largeID = 0
 	clientPullList = []
 	for d in serverIndex['dirList']:
@@ -120,6 +134,7 @@ def clientServerCompare(clientIndex, serverIndex, deletelist, updatelist):
 		if dd is None:
 			if d['ID'] not in deletelist:
 				#create the directory here, dont actually need to pull it
+				os.mkdir(d['path'])
 				clientIndex['dirList'].append({'path':d['path'], 'ID':d['ID']})
 	for f in serverIndex['fileList']:
 		if f['ID'] > largeID:
@@ -135,17 +150,65 @@ def clientServerCompare(clientIndex, serverIndex, deletelist, updatelist):
 				ff['serverTime'] = f['time'] #when pull down update the local time then
 				if f['ID'] in updatelist:
 					updatelist.remove(f['ID'])
+	#delete 
+	for f in clientIndex['fileList']:	
+		ff = next((item for item in serverIndex['fileList'] if item['ID'] == f['ID']),None)
+		if ff is None:
+			os.remove(f['path'])
+			clientIndex['fileList'].remove(f)
+	for d in clientIndex['dirList']:	
+		dd = next((item for item in serverIndex['dirList'] if item['ID'] == d['ID']),None)
+		if dd is None:
+			os.rmdir(d['path'])
+			clientIndex['dirList'].remove(f)
+	for d in dcreatelist:
+		d['ID'] = largeID + 1
+		clientIndex['dirList'].append({'ID':d['ID'], 'path': d['path']})
+		largeID = largeID + 1
+	for f in fcreatelist:
+		f['ID'] = largeID + 1
+		clientIndex['fileList'].append({'ID':f['ID'], 'path': f['path'], 'localTime': f['modTime'], 'serverTime':f['modTime']})
+		largeID = largeID +1
+
+	return clientPullList
+		
+	#create all client entries for new files and directories with large ID
+
+def fillQueue(clientPullList, deletelist, updatelist, dcreatelist, fcreatelist):
+	q = []
+	for p in clientPullList:
+		q.append({'type': 'pull', 'ID': p['ID']})
+	for d in deletelist:
+		q.append({'type': 'delete', 'ID': d['ID']})
+	for u in updatelist:
+		q.append({'type': 'update', 'ID': u['ID'], 'path': u['path'], 'time': u['time']}) #decide where to actually grab the data
+	for dc in dcreatelist:
+		q.append({'type': 'dirCreate', 'ID': dc['ID'], 'path': dc['path']})
+	for fc in fcreatelist:
+		q.append({'type': 'fileCreate', 'ID': fc['ID'], 'path': fc['path'], 'time': fc['time']})
+
+def fullSync(path, username, savePath):
+	systemDir = getSystemDir(path)
+	clientIndex = getClientIndex(username, savePath)
+	deleteList = createDeleteList(clientIndex)
+	lists = systemClientCompare(client, systemDir)
+	serverIndex = getServerIndex()
+	pullList = clientServerCompare(clientIndex, serverIndex, deletelist, lists['updatelist'], lists['dcreatelist'], lists['fcreatelist'])
+	q = fillQueue(pullList, deleteList, lists['updatelist'], lists['dcreatelist'], lists['fcreatelist'])
+	saveClientIndex(clientIndex, username, savePath)
+	
 			
 		
 				
 			
 username = 'kevin'
 p = '/home/student/html'
+savePath = '/home/student/saveData'
 sysD = getSystemDir(p)
 #pumpIndexTest('/home/student/saveData', username, sysD)
 pumpServerIndexTest('/home/student/saveData', username, sysD)
-server = getClientIndex(username+'Server')
-client = getClientIndex(username)
+server = getClientIndex(username+'Server', savePath)
+client = getClientIndex(username, savePath)
 delete = createDeleteList(client)
 #for d in sysD['dirs']:
 	#print d['path']
