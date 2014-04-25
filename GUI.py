@@ -69,6 +69,7 @@ class simpleapp_tk(Tkinter.Tk):
         if tempPass == "poofart" and tempName == "lala":
             self.initializeSuccess()
 
+
         else:
             self.initializeFailure()
 
