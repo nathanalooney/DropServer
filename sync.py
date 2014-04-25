@@ -3,9 +3,11 @@ __author__ = 'Kevin'
 #TODO fix file paths - all in client absolute right now
 # figure out exactly how to do the savepath
 # connection to sever/get serverIndex
+# 	get real server running on other IP
 # send all posts to server from queue
 #	with this make sure on pulls to change local time on client index and resave
 # make sure lists are being passed by reference and keeping value
+
 
 import pickle
 import os
@@ -53,7 +55,7 @@ def pumpServerIndexTest(path, username, sysDir):
 		f['dirList'].append({'path': d['path'], 'ID':idN})
 		idN = idN + 1
 	for fil in sysD['files']:
-		f['fileList'].append({'path': fil['path'], 'ID':idN, 'localTime': fil['modTime'], 'serverTime': fil['modTime']})
+		f['fileList'].append({'path': fil['path'], 'ID':idN, 'time': fil['modTime']})
 		idN = idN + 1
 
 	savData = open(path+str(username)+'Server'+'.pkl', 'wb')
@@ -88,16 +90,17 @@ def saveClientIndex(clientIndex, username, savePath):
 		
     	
 def createDeleteList(clientIndex):
-	deletelist = []
+	fileDeleteList = []
+	dirDeleteList = []
 	for d in clientIndex['dirList']:
 		if not os.path.exists(d['path']):
-			deletelist.append(d['ID'])
+			dirDeletelist.append(d['ID'])
 			clientIndex['dirList'].remove(d)
 	for f in clientIndex['fileList']:
-			deletelist.append(f['ID'])
-			print f['ID']
+			fileDeletelist.append(f['ID'])
+			#print f['ID']
 			clientIndex['fileList'].remove(f)
-	return deletelist
+	return {'fileDeleteList': fileDeletelist, 'dirDeleteList': dirDeleteList}
 
 def getServerIndex():
 	print 'grab the index from server'
@@ -174,27 +177,36 @@ def clientServerCompare(clientIndex, serverIndex, deletelist, updatelist, dcreat
 		
 	#create all client entries for new files and directories with large ID
 
-def fillQueue(clientPullList, deletelist, updatelist, dcreatelist, fcreatelist):
+def fillQueue(clientPullList, fileDeletelist, dirDeleteList, updatelist, dcreatelist, fcreatelist, username):
 	q = []
 	for p in clientPullList:
-		q.append({'type': 'pull', 'ID': p['ID']})
-	for d in deletelist:
-		q.append({'type': 'delete', 'ID': d['ID']})
+		q.append({'type': 'pull', 'username': username, 'ID': p['ID']})
+	for d in fileDeletelist:
+		q.append({'type': 'fileDelete', 'username': username, 'ID': d['ID']})
+	for d in dirDeletelist:
+		q.append({'type': 'fileDelete', 'username': username, 'ID': d['ID']})
 	for u in updatelist:
-		q.append({'type': 'update', 'ID': u['ID'], 'path': u['path'], 'time': u['time']}) #decide where to actually grab the data
+		q.append({'type': 'update', 'username': username, 'ID': u['ID'], 'path': u['path'], 'time': u['time']}) #decide where to actually grab the data
 	for dc in dcreatelist:
-		q.append({'type': 'dirCreate', 'ID': dc['ID'], 'path': dc['path']})
+		q.append({'type': 'dirCreate', 'username': username, 'ID': dc['ID'], 'path': dc['path']})
 	for fc in fcreatelist:
-		q.append({'type': 'fileCreate', 'ID': fc['ID'], 'path': fc['path'], 'time': fc['time']})
+		q.append({'type': 'fileCreate', 'username': username, 'ID': fc['ID'], 'path': fc['path'], 'time': fc['time']})
+
+	
+	#getServerIndex
+        #r = requests.post('http://localhost:8000/syncfolder/send', files = files)
+	#files = {'type': 'created', 'file': open(event.src_path, 'rb')}
 
 def fullSync(path, username, savePath):
 	systemDir = getSystemDir(path)
 	clientIndex = getClientIndex(username, savePath)
 	deleteList = createDeleteList(clientIndex)
+	fileDeleteList = deleteList['fileDeleteList']
+	dirDeleteList = deleteList['dirDeleteList']
 	lists = systemClientCompare(client, systemDir)
 	serverIndex = getServerIndex()
-	pullList = clientServerCompare(clientIndex, serverIndex, deletelist, lists['updatelist'], lists['dcreatelist'], lists['fcreatelist'])
-	q = fillQueue(pullList, deleteList, lists['updatelist'], lists['dcreatelist'], lists['fcreatelist'])
+	pullList = clientServerCompare(clientIndex, serverIndex, fileDeletelist, dirDeleteList, lists['updatelist'], lists['dcreatelist'], lists['fcreatelist'])
+	q = fillQueue(pullList, fileDeleteList, dirDeleteList, lists['updatelist'], lists['dcreatelist'], lists['fcreatelist'])
 	saveClientIndex(clientIndex, username, savePath)
 	
 			
