@@ -92,8 +92,8 @@ class simpleapp_tk(Tkinter.Tk):
 
     def initializeSuccess(self):
         l = Tkinter.Toplevel()
-        l.minsize(600,600)
-        l.maxsize(800,800)
+        l.minsize(400,400)
+        l.maxsize(600,600)
         l.title(u"FallCube -- Home")
         l.labelVar = Tkinter.StringVar()
         l.label = Tkinter.Label(l, textvariable=l.labelVar, anchor="w", fg="black")
@@ -106,17 +106,26 @@ class simpleapp_tk(Tkinter.Tk):
         l.labelVar.set(u"Files")
 
         l.listbox = Tkinter.Listbox(l)
-        l.listbox.grid(column=1, row=1, columnspan=10, rowspan=6, sticky='EW')
+        l.listbox.grid(column=0, row=1, columnspan=10, rowspan=6, sticky='EW')
         k = ["look", "I am ", "adding to", "the listbox"]
         for item in range(0,len(k)):
             l.listbox.insert(item,k[item])
             #Add the list of Queries of file names from DB
 
+        l.listbox2 = Tkinter.Listbox(l)
+        l.listbox2.grid(column=11, row=1, columnspan=20, rowspan=10, sticky='EW')
 
 
 
 
 
+        l.button = Tkinter.Button(l, text=u"Syncronize", command=self.syncronize)
+        l.button.grid(column=0,row=12)
+
+
+    def syncronize(self):
+        print "Shiittt"
+        #add logic for syncronizing and updating
 
     def regWindow(self):
         o = Tkinter.Toplevel()
@@ -158,6 +167,8 @@ class simpleapp_tk(Tkinter.Tk):
 
         o.button = Tkinter.Button(o,text=u"Enter !", command=self.OnButtonClickReg)
         o.button.grid(column=0,row=10)
+
+
 
     def OnButtonClickReg(self):
         print"Im chillin big brother Im chillin"
