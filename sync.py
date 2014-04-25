@@ -102,9 +102,10 @@ def createDeleteList(clientIndex):
 			clientIndex['fileList'].remove(f)
 	return {'fileDeleteList': fileDeletelist, 'dirDeleteList': dirDeleteList}
 
-def getServerIndex():
-	print 'grab the index from server'
-
+def getServerIndex(username):
+	msg = {'username': username}
+	r = requests.post('http://localhost:8000/syncfolder/getServerIndex', files = msg)
+	return r
 
 def systemClientCompare(clientIndex, systemDict):
 	dcreatelist = []
@@ -127,7 +128,7 @@ def systemClientCompare(clientIndex, systemDict):
 				updatelist.append({'ID': ff['ID'], 'time': ff['localTime'], 'path': ff['path']})
 	return {'dcreatelist': dcreatelist, 'fcreatelist': fcreatelist, 'updatelist': updatelist}
 
-def clientServerCompare(clientIndex, serverIndex, deletelist, updatelist, dcreatelist, fcreatelist):
+def clientServerCompare(clientIndex, serverIndex, deletelist, updatelist, dcreatelist, fcreatelist, path):
 	largeID = 0
 	clientPullList = []
 	for d in serverIndex['dirList']:
@@ -137,7 +138,7 @@ def clientServerCompare(clientIndex, serverIndex, deletelist, updatelist, dcreat
 		if dd is None:
 			if d['ID'] not in deletelist:
 				#create the directory here, dont actually need to pull it
-				os.mkdir(d['path'])
+				os.mkdir(path + d['path'])
 				clientIndex['dirList'].append({'path':d['path'], 'ID':d['ID']})
 	for f in serverIndex['fileList']:
 		if f['ID'] > largeID:
@@ -177,21 +178,56 @@ def clientServerCompare(clientIndex, serverIndex, deletelist, updatelist, dcreat
 		
 	#create all client entries for new files and directories with large ID
 
-def fillQueue(clientPullList, fileDeletelist, dirDeleteList, updatelist, dcreatelist, fcreatelist, username):
+def redirectPosts(clientPullList, fileDeletelist, dirDeleteList, updatelist, dcreatelist, fcreatelist, username, path):
 	q = []
 	for p in clientPullList:
-		q.append({'type': 'pull', 'username': username, 'ID': p['ID']})
+		msg = {'username': username, 'ID': p['ID']}
+		pullFilePost(msg, path)
 	for d in fileDeletelist:
-		q.append({'type': 'fileDelete', 'username': username, 'ID': d['ID']})
+		msg = {'username': username, 'ID': d['ID']}
+		fileDeletePost(msg)
 	for d in dirDeletelist:
-		q.append({'type': 'fileDelete', 'username': username, 'ID': d['ID']})
+		msg = {'username': username, 'ID': d['ID']}
+		dirDeletePost
 	for u in updatelist:
-		q.append({'type': 'update', 'username': username, 'ID': u['ID'], 'path': u['path'], 'time': u['time']}) #decide where to actually grab the data
+		msg = {'username': username, 'ID': u['ID'], 'path': u['path'], 'time': u['time']} #decide where to actually grab the data
+		updatePost(msg)
 	for dc in dcreatelist:
-		q.append({'type': 'dirCreate', 'username': username, 'ID': dc['ID'], 'path': dc['path']})
+		msg = {'username': username, 'ID': dc['ID'], 'path': dc['path']}
+		dirCreatePost(msg)
 	for fc in fcreatelist:
-		q.append({'type': 'fileCreate', 'username': username, 'ID': fc['ID'], 'path': fc['path'], 'time': fc['time']})
+		msg = {'username': username, 'ID': fc['ID'], 'path': fc['path'], 'time': fc['time']}
+		fileCreatePost(msg)
 
+	
+def pullFilePost(msg, path):
+	r = requests.post('http://localhost:8000/syncfolder/pull', files = msg)
+	fil = open (r['path'], 'w')
+	fil.write(r['data'])
+	fil.close()
+	ff = next((item for item in clientIndex['dirList'] if item['ID'] == r['ID']),None)
+	if ff not None:
+		path = path + r['path']
+		statbuf = os.stat(path)
+                t = statbuf.st_mtime
+		ff['localTime'] = t
+
+def fileDeletePost(msg):
+	r = requests.post('http://localhost:8000/syncfolder/fileDelete', files = msg)
+
+def dirDeletePost(msg):
+	r = requests.post('http://localhost:8000/syncfolder/dirDelete', files = msg)
+
+def updatPost(msg):
+	msg['file'] = open(msg['path'], 'rb')
+	r = requests.post('http://localhost:8000/syncfolder/update', files = msg)
+	
+def dirCreatePost(msg):
+	r = requests.post('http://localhost:8000/syncfolder/dirCreate', files = msg)
+	
+def fileCreatePost(msg):
+	msg['file'] = open(msg['path'], 'rb')
+	r = requests.post('http://localhost:8000/syncfolder/fileCreate', files = msg)
 	
 	#getServerIndex
         #r = requests.post('http://localhost:8000/syncfolder/send', files = files)
