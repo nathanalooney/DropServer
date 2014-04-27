@@ -1,4 +1,10 @@
+__author__ = 'Rahim'
+
 import Tkinter
+import sqlite3
+import csv
+import sync
+
 
 class simpleapp_tk(Tkinter.Tk):
 
@@ -125,7 +131,9 @@ class simpleapp_tk(Tkinter.Tk):
 
 
     def syncronize(self):
-        print "Shiittt"
+
+        #Dont quite know the path names but this will do for now
+        sync.fullSync("path", self.nameEntry.get(), "path")
         #add logic for syncronizing and updating
 
     def regWindow(self):
@@ -175,6 +183,9 @@ class simpleapp_tk(Tkinter.Tk):
         print"Im chillin big brother Im chillin"
         #Enter logic for checking to see if in DB and also add to db;
         #also validate password logic and
+
+
+
 if __name__ == "__main__":
     app = simpleapp_tk(None)
     app.mainloop()

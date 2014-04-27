@@ -1,5 +1,5 @@
 
-__author__ = 'Student'
+__author__ = 'Rahim'
 import sqlite3
 import csv
 
