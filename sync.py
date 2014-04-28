@@ -13,8 +13,9 @@ import pickle
 import os
 import json
 import time
-import requests
 import sys
+import requests
+
 
 def getSystemDir(path):
 	direct = []
@@ -40,10 +41,10 @@ def pumpIndexTest(path, username, sysDir):
 	direct = os.getcwd
 	f = {'username': 'kevin', 'fileList': [], 'dirList':[]}
 	idN = 1
-	for d in sysD['dirs']:
+	for d in sysDir['dirs']:
 		f['dirList'].append({'path': d['path'], 'ID':idN})
 		idN = idN + 1
-	for fil in sysD['files']:
+	for fil in sysDir['files']:
 		f['fileList'].append({'path': fil['path'], 'ID':idN, 'localTime': fil['modTime'], 'serverTime': fil['modTime']})
 		idN = idN + 1
 

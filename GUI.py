@@ -82,23 +82,23 @@ class simpleapp_tk(Tkinter.Tk):
         u.labelVar = Tkinter.StringVar()
         u.label = Tkinter.Label(u, textvariable=u.labelVar,  anchor="w",fg="black")
         u.label.grid(column=0,row=1,columnspan=2,sticky='EW')
-        u.watchVar = Tkinter.StringVar()
+        self.watchVar = Tkinter.StringVar()
         u.labelVar.set(u"Watch Directory")
-        u.WatchEntry = Tkinter.Entry(u,textvariable=u.watchVar)
-        u.WatchEntry.grid(column=0,row=2,columnspan=2,sticky='EW')
+        self.WatchEntry = Tkinter.Entry(u,textvariable=self.watchVar)
+        self.WatchEntry.grid(column=0,row=2,columnspan=2,sticky='EW')
 
-        self.watchDir = u.WatchEntry.get()
+
 
 
         u.label2Var = Tkinter.StringVar()
         u.label2 = Tkinter.Label(u, textvariable=u.label2Var,  anchor="w",fg="black")
         u.label2.grid(column=0,row=3,columnspan=2,sticky='EW')
-        u.saveVar = Tkinter.StringVar()
+        self.saveVar = Tkinter.StringVar()
         u.label2Var.set(u"Save Directory")
-        u.saveVarEntry = Tkinter.Entry(u,textvariable=u.saveVar)
-        u.saveVarEntry.grid(column=0,row=6,columnspan=2,sticky='EW')
+        self.saveVarEntry = Tkinter.Entry(u,textvariable=self.saveVar)
+        self.saveVarEntry.grid(column=0,row=6,columnspan=2,sticky='EW')
 
-        self.saveVarEntry = u.saveVarEntry.get()
+
 
         u.button = Tkinter.Button(u,text=u"Syncronize!", command=self.initializeSuccess)
         u.button.grid(column=0,row=8)
@@ -143,7 +143,7 @@ class simpleapp_tk(Tkinter.Tk):
     def initializeSuccess(self):
 	print self.nameEntry.get()
 	print self.saveVarEntry
-        sync.runLoop('/home/student/watchMe', self.nameEntry.get(), '/home/student/save2')
+        sync.runLoop(self.WatchEntry.get(), self.nameEntry.get(), self.saveVarEntry.get())
         l = Tkinter.Toplevel()
         l.minsize(400,400)
         l.maxsize(600,600)
