@@ -6,6 +6,7 @@ import csv
 import sync
 import requests
 
+
 class simpleapp_tk(Tkinter.Tk):
 
     def __init__(self, parent):
@@ -101,6 +102,7 @@ class simpleapp_tk(Tkinter.Tk):
 
         u.button = Tkinter.Button(u,text=u"Syncronize!", command=self.initializeSuccess)
         u.button.grid(column=0,row=8)
+
 
 
 
