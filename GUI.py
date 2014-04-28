@@ -143,7 +143,7 @@ class simpleapp_tk(Tkinter.Tk):
     def initializeSuccess(self):
 	print self.nameEntry.get()
 	print self.saveVarEntry
-        sync.runLoop(self.WatchEntry.get(), self.nameEntry.get(), self.saveVarEntry.get())
+        sync.fullSync(self.WatchEntry.get(), self.nameEntry.get(), self.saveVarEntry.get())
         l = Tkinter.Toplevel()
         l.minsize(400,400)
         l.maxsize(600,600)
@@ -162,9 +162,13 @@ class simpleapp_tk(Tkinter.Tk):
         l.listbox.grid(column=0, row=1, columnspan=10, rowspan=6, sticky='EW')
 	
         k = ["look", "I am ", "adding to", "the listbox"]
-	j = sync.getClientIndex(nameEntry.get(), '/home/student/save2'
-        for item in range(0,len(j)):
-            l.listbox.insert(item,j[item])
+	j = sync.getClientIndex(self.nameEntry.get(), self.saveVarEntry.get())
+	print j
+	i =0
+        for item in j['fileList']:
+           	#print j['path']
+		l.listbox.insert(i, item['path'])
+		i = i+1
             #Add the list of Queries of file names from DB
 
         l.listbox2 = Tkinter.Listbox(l)
@@ -172,13 +176,17 @@ class simpleapp_tk(Tkinter.Tk):
 
         l.button = Tkinter.Button(l, text=u"Syncronize", command=self.syncronize)
         l.button.grid(column=0,row=12)
-
+	i =0
+        for item in j['dirList']:
+           	#print j['path']
+		l.listbox.insert(i, item['path'])
+		i = i+1
 
     def syncronize(self):
         #Dont quite know the path names but this will do for now
       #  sync.fullSync(self.watchDir, self.nameEntry.get(), self.saveDir)
         #add logic for syncronizing and updating
-        print ""
+        sync.runLoop(self.WatchEntry.get(), self.nameEntry.get(), self.saveVarEntry.get())
 
 
     def regWindow(self):
