@@ -12,7 +12,6 @@ __author__ = 'Kevin'
 import pickle
 import os
 import json
-import requests
 
 def getSystemDir(path):
 	direct = []
@@ -207,7 +206,7 @@ def pullFilePost(msg, path):
 	fil.write(r['data'])
 	fil.close()
 	ff = next((item for item in clientIndex['dirList'] if item['ID'] == r['ID']),None)
-	if ff is not None:
+	if ff not None:
 		path = path + r['path']
 		statbuf = os.stat(path)
                 t = statbuf.st_mtime
