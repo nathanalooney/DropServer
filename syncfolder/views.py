@@ -36,7 +36,11 @@ def fileCreate(request):
 			user = request.FILES['username'].read()
 
 
-			abspath = Path('folders/' + user + '/' + str(path))
+			abspath = Path('folders/' + str(user) + '/' + str(path))
+
+			print os.path.exists('folders/' + str(user))
+			if not os.path.exists('folders/' + str(user)):
+				os.mkdir('folders/' + str(user))
 
 
 			print str(abspath)
@@ -47,7 +51,8 @@ def fileCreate(request):
 			fl.close
 
 			pickFile = pickle.load(open('fileIndexes/' + user + '.pkl', 'rb'))
-			pickFile['fileList'].append({'path': path, 'ID': idNum, 'time': time})
+			print 'Here i am'
+			pickFile['fileList'].append({'path': str(path), 'ID': idNum, 'time': time})
 			pickle.dump(pickFile, open('fileIndexes/' + user + '.pkl', 'wb'))
 
 	return HttpResponse("Success")
@@ -91,7 +96,7 @@ def fileDelete(request):
 		user = request.FILES['username'].read()
 		idNum = request.FILES['ID'].read()
 
-		pickFile = pickle.load(open('fileIndexes/' + user + '.pkl', 'rb'))
+		pickFile = pickle.load(open('fileIndexes/' + str(user) + '.pkl', 'rb'))
 
 
 		path = ''
@@ -104,8 +109,8 @@ def fileDelete(request):
 
 		pickle.dump(pickFile, open('fileIndexes/' + user + '.pkl', 'wb'))
 	
-		abspath = 'folders/' + user + '/' + path
-		os.remove('folders/' + user + '/' + path)
+		abspath = 'folders/' + user + '/' + str(path)
+		os.remove('folders/' + user + '/' + str(path))
 
 
 	return HttpResponse('Success')
@@ -117,7 +122,7 @@ def dirDelete(request):
 		user = request.FILES['username'].read()
 		idNum = request.FILES['ID'].read()
 		print "Read"
-		pickFile = pickle.load(open('fileIndexes/' + user + '.pkl', 'rb'))
+		pickFile = pickle.load(open('fileIndexes/' + str(user) + '.pkl', 'rb'))
 		print "Pickle"
 
 		path = ''
@@ -129,9 +134,9 @@ def dirDelete(request):
 				pickFile['dirList'].remove(files)
 
 
-		pickle.dump(pickFile, open('fileIndexes/' + user + '.pkl', 'wb'))
+		pickle.dump(pickFile, open('fileIndexes/' + str(user) + '.pkl', 'wb'))
 		print "Dump works"
-		abspath = 'folders/' + user + '/' + path
+		abspath = 'folders/' + str(user) + '/' + str(path)
 		print abspath
 
 		shutil.rmtree(abspath)
@@ -177,15 +182,15 @@ def update(request):
 			path = Path(request.FILES['path'].read())
 			user = request.FILES['username'].read()
 			time = request.FILES['time'].read()
-			abspath = Path('folders/' + user + '/' + str(path))
-			pickFile = pickle.load(open('fileIndexes/' + user + '.pkl', 'rb'))
+			abspath = Path('folders/' + str(user) + '/' + str(path))
+			pickFile = pickle.load(open('fileIndexes/' + str(user) + '.pkl', 'rb'))
 			
 			print str(abspath)
 
 			for files in pickFile['fileList']:
 				if files['ID']== int(idNum):
 					print "Attempting delete"
-					os.remove('folders/' + user+ '/' + files['path'])
+					os.remove('folders/' + str(user)+ '/' + str(files['path']))
 					print "Delete Succesful"
 
 
@@ -207,7 +212,7 @@ def update(request):
 					files['serverTime'] = time
 					files['path'] = str(path)
 
-			pickle.dump(pickFile, open('fileIndexes/' + user + '.pkl', 'wb'))
+			pickle.dump(pickFile, open('fileIndexes/' + str(user) + '.pkl', 'wb'))
 			print "Index Updated"
 
 
@@ -219,7 +224,7 @@ def update(request):
 def pull(request):
 	user = request.FILES['username'].read()
 	idNum = request.FILES['ID'].read()
-	pickFile = pickle.load(open('fileIndexes/' + user + '.pkl', 'rb'))
+	pickFile = pickle.load(open('fileIndexes/' + str(user) + '.pkl', 'rb'))
 	path = ''
 	print "reads work"
 
@@ -231,15 +236,17 @@ def pull(request):
 
 	print path
 
-	r = open('folders/' + user + '/' + path, 'rb')
+	r = open('folders/' + str(user) + '/' + str(path), 'rb')
+	print 'folders/' + user + '/' + path
+	print os.path.exists('folders/' + str(user) + '/' + str(path))
 
 	return HttpResponse(r)
 
 def getServerIndex(request):
 	print "Request Received"
-	print 'mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm'
 	user = request.FILES['username'].read()
 	fil = open('fileIndexes/' + user + '.pkl', 'rb')
+	print os.path.exists('fileIndexes/' + user + '.pkl')
 	#return sendfile(request, 'fileIndexes/' + user + '.pkl')
 	#index = pickle.load(r)
 	#print index

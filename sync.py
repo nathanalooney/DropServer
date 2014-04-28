@@ -32,6 +32,8 @@ def getSystemDir(path):
                 		t = statbuf.st_mtime
                 		f1 = {'path':pth, 'modTime':t}
                 		fil.append(f1)
+	print fil
+	print '============================'
 	return {'dirs': direct, 'files': fil}
 
 def pumpIndexTest(path, username, sysDir):
@@ -71,14 +73,14 @@ def pumpServerIndexTest(path, username, sysDir):
 
 def getClientIndex(username, savePath):
 	try: 
-		file2 = open(savePath+str(username)+'.pkl', 'rb')
+		file2 = open(str(savePath).rstrip('/') + '/'+str(username)+'.pkl', 'rb')
     		newIndex = pickle.load(file2)
     		file2.close()
 		return newIndex
 	except IOError:
     		direct = os.getcwd
 		fi = {'username':username, 'fileList': [], 'dirList': []}
-    		savData = open(savePath+str(username)+'.pkl', 'wb')
+    		savData = open(str(savePath).rstrip('/') + '/'+str(username)+'.pkl', 'wb')
     		pickle.dump(fi, savData)
     		savData.close()
 		file2 = open(savePath+str(username)+'.pkl', 'rb')
@@ -88,7 +90,7 @@ def getClientIndex(username, savePath):
 
 
 def saveClientIndex(clientIndex, username, savePath):
-	savData = open(savePath+str(username)+'.pkl', 'wb')
+	savData = open(str(savePath).rstrip('/') + '/'+str(username)+'.pkl', 'wb')
     	pickle.dump(clientIndex, savData)
     	savData.close()
 		
@@ -143,6 +145,8 @@ def systemClientCompare(clientIndex, systemDict):
 			dcreatelist.append({'path': dirs['path']})
 	for fils in systemDict['files']:
 		ff = next((item for item in clientIndex['fileList'] if item['path'] == fils['path']),None)
+
+		print ff
 		if ff is None:
 			#print 'file not found: ' + str(fils['path'])
 			fcreatelist.append({'path':fils['path'], 'time':fils['modTime']})
@@ -153,7 +157,7 @@ def systemClientCompare(clientIndex, systemDict):
 				updatelist.append({'ID': ff['ID'], 'time': ff['localTime'], 'path': ff['path']})
 	return {'dcreatelist': dcreatelist, 'fcreatelist': fcreatelist, 'updatelist': updatelist}
 
-def clientServerCompare(clientIndex, serverIndex, fileDeleteList, dirDeleteList, updatelist, dcreatelist, fcreatelist, path):
+def clientServerCompare(clientIndex, serverIndex, fileDeleteList, dirDeleteList, updatelist, dcreatelist, fcreatelist, path, savePath, username):
 	largeID = 0
 	clientPullList = []
 	for d in serverIndex['dirList']:
@@ -165,22 +169,23 @@ def clientServerCompare(clientIndex, serverIndex, fileDeleteList, dirDeleteList,
 				#create the directory here, dont actually need to pull it
 				print path
 				print d['path']
-				os.mkdir(str(path) + '/' + str(d['path']).lstrip('/'))
-				clientIndex['dirList'].append({'path':d['path'], 'ID':d['ID']})
+				if not os.path.exists(str(path) + '/' + str(d['path']).lstrip('/')):
+					os.mkdir(str(path) + '/' + str(d['path']).lstrip('/'))
+					clientIndex['dirList'].append({'path':d['path'], 'ID':d['ID']})
 	for f in serverIndex['fileList']:
 		if f['ID'] > largeID:
 			largeID = f['ID']
 		ff = next((item for item in clientIndex['fileList'] if int(item['ID']) == int(f['ID'])),None)
 		if ff is None:
 			if f['ID'] not in fileDeleteList:
-				print '-----------------------------------------------'
+				#print '-----------------------------------------------'
 				#print f
-				print f
+				#print f
 				clientIndex['fileList'].append({'path':str(path)+'/'+str(f['path']).lstrip('/'), 'ID':f['ID'], 'serverTime':f['time'], 'localTime':f['time']})
 				clientPullList.append(f['ID'])
 		else:
-			print 'FF -------------'
-			print ff
+			#print 'FF -------------'
+			#print ff
 			if f['time'] > ff['serverTime']:
 				clientPullList.append(f['ID'])
 				ff['serverTime'] = f['time'] #when pull down update the local time then
@@ -195,8 +200,11 @@ def clientServerCompare(clientIndex, serverIndex, fileDeleteList, dirDeleteList,
 	for d in clientIndex['dirList']:	
 		dd = next((item for item in serverIndex['dirList'] if item['ID'] == d['ID']),None)
 		if dd is None:
-			os.rmdir(d['path'])
-			clientIndex['dirList'].remove(d)
+			try:
+				os.rmdir(d['path'])
+				clientIndex['dirList'].remove(d)
+			except OSError:
+				print 'dont delete that folder'
 	for d in dcreatelist:
 		d['ID'] = str(int(largeID) + 1)
 		clientIndex['dirList'].append({'ID':d['ID'], 'path': d['path']})
@@ -204,7 +212,11 @@ def clientServerCompare(clientIndex, serverIndex, fileDeleteList, dirDeleteList,
 	for f in fcreatelist:
 		f['ID'] = str(int(largeID) + 1)
 		clientIndex['fileList'].append({'ID':f['ID'], 'path': f['path'], 'localTime': f['time'], 'serverTime':f['time']})
+		#print 'CLIENT CREATING      DOIDODOIDIODIO'
+		#print clientIndex
 		largeID = int(largeID) +1
+	
+	saveClientIndex(clientIndex, username, savePath)
 
 	return clientPullList
 
@@ -296,17 +308,24 @@ def fileCreatePost(msg, fullPath):
 
 def fullSync(path, username, savePath):
 	systemDir = getSystemDir(path)
+	#print 'SYSTEM DIRECT ----------------------'
+	#print systemDir
 	clientIndex = getClientIndex(username, savePath)
 	print 'CLIENT INDEX ----------------------------'
 	print clientIndex
 	deleteList = createDeleteList(clientIndex)
+
 	fileDeleteList = deleteList['fileDeleteList']
+	#print 'FILE DELETE -------------'
+	#print fileDeleteList
 	dirDeleteList = deleteList['dirDeleteList']
 	lists = systemClientCompare(clientIndex, systemDir)
+	#print 'FILE CREATE --------------------'
+	#print lists['fcreatelist']
 	serverIndex = getServerIndex(username, savePath)
 	print 'SERVER INDEX -------------------------------'
 	print serverIndex
-	pullList = clientServerCompare(clientIndex, serverIndex, fileDeleteList, dirDeleteList, lists['updatelist'], lists['dcreatelist'], lists['fcreatelist'], path)
+	pullList = clientServerCompare(clientIndex, serverIndex, fileDeleteList, dirDeleteList, lists['updatelist'], lists['dcreatelist'], lists['fcreatelist'], path, savePath, username)
 	sendPosts(clientIndex, pullList, fileDeleteList, dirDeleteList, lists['updatelist'], lists['dcreatelist'], lists['fcreatelist'], username, path)
 	saveClientIndex(clientIndex, username, savePath)
 	
@@ -335,10 +354,21 @@ def purgeList(savePath, username):
 				
 if __name__ == "__main__":
 			
+	#username = raw_input("Enter Username: ")
 	username = 'kevin'
-	p = '/home/student/html'
-	savePath = '/home/student/saveData/'
-	fullSync(p, username, savePath)
+	#path = raw_input("Enter Watched directory: ")
+	path = '/home/student/html'
+	#savePath = raw_input("Enter saveData path: ")
+	savePath = '/home/student/saveData2/'
+	#fullSync(path, username, savePath)
+	try:
+		while True:
+			fullSync(path, username, savePath)
+     			#time.sleep(1)
+
+	except KeyboardInterrupt:
+        	print 'Stop'
+		sys.exit
 	
 	#purgeList(savePath, username)
 	#savePath = '/home/student/saveData2/'
