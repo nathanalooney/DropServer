@@ -6,7 +6,7 @@ import shutil
 import os
 import requests
 import pickle
-from sendfile import sendfile
+from models import Users
 
 
 
@@ -247,16 +247,50 @@ def getServerIndex(request):
 	user = request.FILES['username'].read()
 	fil = open('fileIndexes/' + user + '.pkl', 'rb')
 	print os.path.exists('fileIndexes/' + user + '.pkl')
-	#return sendfile(request, 'fileIndexes/' + user + '.pkl')
-	#index = pickle.load(r)
-	#print index
-	#print "File opened"
-	#print r
 	return HttpResponse(fil)
 
 
+def setup(request):
+	print "Request Received: Setup"
+	user = request.FILES['username'].read()
+	pword = request.FILES['password'].read()
+	try: 
+		Users.objects.get(username=user)
+		return HttpResponse("Failure: Username Exists")
+	except:
+		newuser = Users(username=user, password=pword)
+		newuser.save()
+
+		
+
+		os.makedirs('folders/'+ user)
+
+		pickFile = {"username": user, "fileList": [], 'dirList': []}
+		pickle.dump(pickFile, open('fileIndexes/'+user+'.pkl', 'wb'))
+		return HttpResponse("Success")
+
+
+
+
 def login(request):
-	return StreamingHttpResponse("<h1> Login </h1>")
+	print "Request Received: Login"
+	user = request.FILES['username'].read()
+	pword = request.FILES['password'].read()
+	print "Reads Succesful"
+	try:
+		check = Users.objects.get(username=user)
+	except:
+		return HttpResponse("Failure")
+	print "Retrieval Succesful"
+	if pword == check.password:
+		return HttpResponse("Success")
+	else:
+		return HttpResponse("Failure")
+
+
+
+
+
 
 
 

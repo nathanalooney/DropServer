@@ -1,0 +1,12 @@
+(dp0
+S'username'
+p1
+S'bo'
+p2
+sS'dirList'
+p3
+(lp4
+sS'fileList'
+p5
+(lp6
+s.

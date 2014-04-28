@@ -13,4 +13,6 @@ urlpatterns = patterns('',
 	url(r'^move$', views.move, name='move'),
 	url(r'^pull$', views.pull, name='pull'),
 	url(r'^getServerIndex$', views.getServerIndex, name='getServerIndex'),
+	url(r'^setup$', views.setup, name='setup'),
+	url(r'^login$', views.login, name='login'),
 )
