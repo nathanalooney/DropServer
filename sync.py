@@ -14,6 +14,7 @@ import os
 import json
 import time
 import requests
+import sys
 
 def getSystemDir(path):
 	direct = []
@@ -105,7 +106,14 @@ def createDeleteList(clientIndex):
 def getServerIndex(username):
 	msg = {'username': username}
 	r = requests.post('http://localhost:8000/syncfolder/getServerIndex', files = msg)
-	return r
+	fil = open (savePath+str(username)+'Server'+'.pkl', 'w')
+	fil.write(r['data'])
+	fil.close()
+	serverFile = open(savePath+str(username)+'Server'+'.pkl', 'rb')
+    	serverIndex = pickle.load(file2)
+    	file2.close()
+	os.remove(savePath+str(username)+'Server'+'.pkl')
+	return serverIndex
 
 def systemClientCompare(clientIndex, systemDict):
 	dcreatelist = []
@@ -260,6 +268,7 @@ if __name__ == "__main__":
 			fullSync(p, username, savePath)
 	except KeyboardInterrupt:
         	print 'Stop'
+		sys.exit
 
 #sysD = getSystemDir(p)
 #pumpIndexTest('/home/student/saveData', username, sysD)
