@@ -6,6 +6,7 @@ import shutil
 import os
 import requests
 import pickle
+from sendfile import sendfile
 
 
 
@@ -230,17 +231,21 @@ def pull(request):
 
 	print path
 
-	r = open('folders/' + user + '/' + path)
+	r = open('folders/' + user + '/' + path, 'rb')
 
 	return HttpResponse(r)
 
 def getServerIndex(request):
 	print "Request Received"
+	print 'mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm'
 	user = request.FILES['username'].read()
-	r = open('fileIndexes/' + user + '.pkl', 'rb')
-
-	print "File opened"
-	return HttpResponse(r)
+	fil = open('fileIndexes/' + user + '.pkl', 'rb')
+	#return sendfile(request, 'fileIndexes/' + user + '.pkl')
+	#index = pickle.load(r)
+	#print index
+	#print "File opened"
+	#print r
+	return HttpResponse(fil)
 
 
 def login(request):
