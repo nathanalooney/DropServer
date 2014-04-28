@@ -114,7 +114,7 @@ class simpleapp_tk(Tkinter.Tk):
 
         #Logic for server requests and in validation
 
-        if tempPass == "poofart" and tempName == "lala":
+        if tempPass == "poofart" and tempName == "kevin":
             self.initializeSuccess()
 
 
@@ -141,7 +141,9 @@ class simpleapp_tk(Tkinter.Tk):
 
 
     def initializeSuccess(self):
-        sync.fullsyncronize(self.watchDir, self.nameEntry.get(), self.saveVarEntry)
+	print self.nameEntry.get()
+	print self.saveVarEntry
+        sync.runLoop('/home/student/watchMe', self.nameEntry.get(), '/home/student/save2')
         l = Tkinter.Toplevel()
         l.minsize(400,400)
         l.maxsize(600,600)
@@ -158,9 +160,11 @@ class simpleapp_tk(Tkinter.Tk):
 
         l.listbox = Tkinter.Listbox(l)
         l.listbox.grid(column=0, row=1, columnspan=10, rowspan=6, sticky='EW')
+	
         k = ["look", "I am ", "adding to", "the listbox"]
-        for item in range(0,len(k)):
-            l.listbox.insert(item,k[item])
+	j = sync.getClientIndex(nameEntry.get(), '/home/student/save2'
+        for item in range(0,len(j)):
+            l.listbox.insert(item,j[item])
             #Add the list of Queries of file names from DB
 
         l.listbox2 = Tkinter.Listbox(l)
