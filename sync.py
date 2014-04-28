@@ -2,16 +2,18 @@ __author__ = 'Kevin'
 
 #TODO fix file paths - all in client absolute right now
 # figure out exactly how to do the savepath
-# connection to sever/get serverIndex
+# X connection to sever/get serverIndex
 # 	get real server running on other IP
-# send all posts to server from queue
-#	with this make sure on pulls to change local time on client index and resave
+# X send all posts to server from queue
+#	X with this make sure on pulls to change local time on client index and resave
 # make sure lists are being passed by reference and keeping value
 
 
 import pickle
 import os
 import json
+import time
+import requests
 
 def getSystemDir(path):
 	direct = []
@@ -66,8 +68,6 @@ def pumpServerIndexTest(path, username, sysDir):
 
 def getClientIndex(username, savePath):
 	try: 
-		direct = '/home/student/saveData'
-		#file2 = open(str(direct)+str(username)+'.pkl', 'rb')
 		file2 = open(savePath+str(username)+'.pkl', 'rb')
     		newIndex = pickle.load(file2)
     		file2.close()
@@ -83,6 +83,7 @@ def getClientIndex(username, savePath):
     		file2.close()
 		return newIndex
 
+
 def saveClientIndex(clientIndex, username, savePath):
 	savData = open(savePath+str(username)+'.pkl', 'wb')
     	pickle.dump(clientIndex, savData)
@@ -94,13 +95,12 @@ def createDeleteList(clientIndex):
 	dirDeleteList = []
 	for d in clientIndex['dirList']:
 		if not os.path.exists(d['path']):
-			dirDeletelist.append(d['ID'])
+			dirDeleteList.append(d['ID'])
 			clientIndex['dirList'].remove(d)
 	for f in clientIndex['fileList']:
-			fileDeletelist.append(f['ID'])
-			#print f['ID']
+			fileDeleteList.append(f['ID'])
 			clientIndex['fileList'].remove(f)
-	return {'fileDeleteList': fileDeletelist, 'dirDeleteList': dirDeleteList}
+	return {'fileDeleteList': fileDeleteList, 'dirDeleteList': dirDeleteList}
 
 def getServerIndex(username):
 	msg = {'username': username}
@@ -119,7 +119,7 @@ def systemClientCompare(clientIndex, systemDict):
 	for fils in systemDict['files']:
 		ff = next((item for item in clientIndex['fileList'] if item['path'] == fils['path']),None)
 		if ff is None:
-			print 'directory not found: ' + str(fils['path'])
+			print 'file not found: ' + str(fils['path'])
 			fcreatelist.append({'path':fils['path'], 'time':fils['modTime']})
 		else:
 			print 'this is filefound: ' + str(ff)
@@ -175,10 +175,9 @@ def clientServerCompare(clientIndex, serverIndex, deletelist, updatelist, dcreat
 		largeID = largeID +1
 
 	return clientPullList
-		
-	#create all client entries for new files and directories with large ID
 
-def redirectPosts(clientPullList, fileDeletelist, dirDeleteList, updatelist, dcreatelist, fcreatelist, username, path):
+
+def sendPosts(clientPullList, fileDeletelist, dirDeleteList, updatelist, dcreatelist, fcreatelist, username, path):
 	q = []
 	for p in clientPullList:
 		msg = {'username': username, 'ID': p['ID']}
@@ -190,7 +189,7 @@ def redirectPosts(clientPullList, fileDeletelist, dirDeleteList, updatelist, dcr
 		msg = {'username': username, 'ID': d['ID']}
 		dirDeletePost
 	for u in updatelist:
-		msg = {'username': username, 'ID': u['ID'], 'path': u['path'], 'time': u['time']} #decide where to actually grab the data
+		msg = {'username': username, 'ID': u['ID'], 'path': u['path'], 'time': u['time']} 
 		updatePost(msg)
 	for dc in dcreatelist:
 		msg = {'username': username, 'ID': dc['ID'], 'path': dc['path']}
@@ -206,32 +205,34 @@ def pullFilePost(msg, path):
 	fil.write(r['data'])
 	fil.close()
 	ff = next((item for item in clientIndex['dirList'] if item['ID'] == r['ID']),None)
-	if ff not None:
+	if ff is not None:
 		path = path + r['path']
 		statbuf = os.stat(path)
                 t = statbuf.st_mtime
 		ff['localTime'] = t
 
+
 def fileDeletePost(msg):
 	r = requests.post('http://localhost:8000/syncfolder/fileDelete', files = msg)
 
+
 def dirDeletePost(msg):
 	r = requests.post('http://localhost:8000/syncfolder/dirDelete', files = msg)
+
 
 def updatPost(msg):
 	msg['file'] = open(msg['path'], 'rb')
 	r = requests.post('http://localhost:8000/syncfolder/update', files = msg)
 	
+
 def dirCreatePost(msg):
 	r = requests.post('http://localhost:8000/syncfolder/dirCreate', files = msg)
 	
+
 def fileCreatePost(msg):
 	msg['file'] = open(msg['path'], 'rb')
 	r = requests.post('http://localhost:8000/syncfolder/fileCreate', files = msg)
 	
-	#getServerIndex
-        #r = requests.post('http://localhost:8000/syncfolder/send', files = files)
-	#files = {'type': 'created', 'file': open(event.src_path, 'rb')}
 
 def fullSync(path, username, savePath):
 	systemDir = getSystemDir(path)
@@ -239,48 +240,53 @@ def fullSync(path, username, savePath):
 	deleteList = createDeleteList(clientIndex)
 	fileDeleteList = deleteList['fileDeleteList']
 	dirDeleteList = deleteList['dirDeleteList']
-	lists = systemClientCompare(client, systemDir)
-	serverIndex = getServerIndex()
-	pullList = clientServerCompare(clientIndex, serverIndex, fileDeletelist, dirDeleteList, lists['updatelist'], lists['dcreatelist'], lists['fcreatelist'])
-	q = fillQueue(pullList, fileDeleteList, dirDeleteList, lists['updatelist'], lists['dcreatelist'], lists['fcreatelist'])
+	lists = systemClientCompare(clientIndex, systemDir)
+	serverIndex = getServerIndex(username)
+	pullList = clientServerCompare(clientIndex, serverIndex, fileDeletelist, dirDeleteList, lists['updatelist'], lists['dcreatelist'], lists['fcreatelist'], path)
+	sendPosts(pullList, fileDeleteList, dirDeleteList, lists['updatelist'], lists['dcreatelist'], lists['fcreatelist'], username, path)
 	saveClientIndex(clientIndex, username, savePath)
 	
 			
 		
 				
+if __name__ == "__main__":
 			
-username = 'kevin'
-p = '/home/student/html'
-savePath = '/home/student/saveData'
-sysD = getSystemDir(p)
+	username = 'kevin'
+	p = '/home/student/html'
+	savePath = '/home/student/saveData'
+	try:
+		while True:
+     			time.sleep(1)
+			fullSync(p, username, savePath)
+	except KeyboardInterrupt:
+        	print 'Stop'
+
+#sysD = getSystemDir(p)
 #pumpIndexTest('/home/student/saveData', username, sysD)
-pumpServerIndexTest('/home/student/saveData', username, sysD)
-server = getClientIndex(username+'Server', savePath)
-client = getClientIndex(username, savePath)
-delete = createDeleteList(client)
+#pumpServerIndexTest('/home/student/saveData', username, sysD)
+#server = getClientIndex(username+'Server', savePath)
+#client = getClientIndex(username, savePath)
+#delete = createDeleteList(client)
 #for d in sysD['dirs']:
 	#print d['path']
 #for f in sysD['files']:
 	#print f['path']
 	#print f['modTime']
-print '------------------------'
+#print '------------------------'
 #for d in server['dirList']:
 	#print d['path']
 #for f in server['fileList']:
 	#print f['path']
 	#print f['localTime']
 
-lists = systemClientCompare(client, sysD)
-print '================================='
-print 'DELETE LIST'
-print delete
-print client
-print 'DCREATE LIST'
-print lists['dcreatelist']
-print 'FCREATE LIST'
-print lists['fcreatelist']
-print 'UPDATE LIST'
-print lists['updatelist']
-
-
-
+#lists = systemClientCompare(client, sysD)
+#print '================================='
+#print 'DELETE LIST'
+#print delete
+#print client
+#print 'DCREATE LIST'
+#print lists['dcreatelist']
+#print 'FCREATE LIST'
+#print lists['fcreatelist']
+#print 'UPDATE LIST'
+#print lists['updatelist']
