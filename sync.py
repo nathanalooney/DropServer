@@ -73,17 +73,20 @@ def pumpServerIndexTest(path, username, sysDir):
 
 def getClientIndex(username, savePath):
 	try: 
-		file2 = open(str(savePath).rstrip('/') + '/'+str(username)+'.pkl', 'rb')
+		print savePath
+		print (str(savePath).rstrip('/') + '/'+str(username)+'.pkl', 'r+b')
+		file2 = open(str(savePath).rstrip('/') + '/'+str(username)+'.pkl', 'r+b')
     		newIndex = pickle.load(file2)
     		file2.close()
 		return newIndex
 	except IOError:
     		direct = os.getcwd
 		fi = {'username':username, 'fileList': [], 'dirList': []}
-    		savData = open(str(savePath).rstrip('/') + '/'+str(username)+'.pkl', 'wb')
+		print (str(savePath).rstrip('/') + '/'+str(username)+'.pkl', 'r+b')
+    		savData = open(str(savePath).rstrip('/') + '/'+str(username)+'.pkl', 'r+b')
     		pickle.dump(fi, savData)
     		savData.close()
-		file2 = open(savePath+str(username)+'.pkl', 'rb')
+		file2 = open(savePath+str(username)+'.pkl', 'r+b')
     		newIndex = pickle.load(file2)
     		file2.close()
 		return newIndex
@@ -347,13 +350,24 @@ def purgeList(savePath, username):
 	for d in index['dirList']:
 		index['dirList'].remove(d)
 	print index
-	savData = open(savePath+str(username)+'.pkl', 'wb')
+	savData = open(savePath+str(username)+'.pkl', 'rb')
     	pickle.dump(index, savData)
     	savData.close()	
 		
+
+def runLoop(path, username, savePath):
+	try:
+		while True:
+			fullSync(path, username, savePath)
+     			time.sleep(1)
+
+	except KeyboardInterrupt:
+        	print 'Stop'
+		sys.exit
 				
 if __name__ == "__main__":
 			
+
 	#username = raw_input("Enter Username: ")
 	username = 'kevin'
 	#path = raw_input("Enter Watched directory: ")
@@ -367,8 +381,9 @@ if __name__ == "__main__":
      			#time.sleep(1)
 
 	except KeyboardInterrupt:
-        	print 'Stop'
-		sys.exit
+        	print 'Turn syncronize on? [y/n] '
+		time.sleep(1)
+
 	
 	#purgeList(savePath, username)
 	#savePath = '/home/student/saveData2/'
