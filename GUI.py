@@ -4,7 +4,7 @@ import Tkinter
 import sqlite3
 import csv
 import sync
-
+import requests
 
 class simpleapp_tk(Tkinter.Tk):
 
@@ -22,10 +22,10 @@ class simpleapp_tk(Tkinter.Tk):
         self.nameVariable = Tkinter.StringVar()
         self.passwordVariable = Tkinter.StringVar()
         self.nameEntry = Tkinter.Entry(self,textvariable=self.nameVariable)
-        self.nameEntry.bind("<Return>",self.OnPressEnter)
+        self.nameEntry.bind("<Return>", self.dirInitButton)
 
         self.passwordEntry = Tkinter.Entry(self, textvariable=self.passwordVariable, show='*')
-        self.passwordEntry.bind("<Return>",self.OnPressEnter)
+        self.passwordEntry.bind("<Return>", self.dirInitButton)
         self.nameEntry.grid(column=0,row=1,sticky='EW')
         self.passwordEntry.grid(column=0,row=3,sticky='EW')
 
@@ -50,7 +50,7 @@ class simpleapp_tk(Tkinter.Tk):
 
         self.grid_columnconfigure(0,weight=1)
         self.grid_size()
-        self.resizable(True,False)
+        self.resizable(True, False)
         self.update()
         self.geometry(self.geometry())
 
@@ -61,10 +61,50 @@ class simpleapp_tk(Tkinter.Tk):
 
         #logic for validation and server requests
         if tempPass == "poofart" and tempName == "lala":
-            self.initializeSuccess()
+            self.initializeDirectoryWind()
 
         else:
             self.initializeFailure()
+
+
+    def dirInitButton(self, event):
+        self.initializeDirectoryWind()
+
+
+
+    def initializeDirectoryWind(self):
+        u = Tkinter.Toplevel()
+        u.title("Directories")
+        u.minsize(300,200)
+        u.maxsize(300,200)
+
+        u.labelVar = Tkinter.StringVar()
+        u.label = Tkinter.Label(u, textvariable=u.labelVar,  anchor="w",fg="black")
+        u.label.grid(column=0,row=1,columnspan=2,sticky='EW')
+        u.watchVar = Tkinter.StringVar()
+        u.labelVar.set(u"Watch Directory")
+        u.WatchEntry = Tkinter.Entry(u,textvariable=u.watchVar)
+        u.WatchEntry.grid(column=0,row=2,columnspan=2,sticky='EW')
+
+        self.watchDir = u.WatchEntry.get()
+
+
+        u.label2Var = Tkinter.StringVar()
+        u.label2 = Tkinter.Label(u, textvariable=u.label2Var,  anchor="w",fg="black")
+        u.label2.grid(column=0,row=3,columnspan=2,sticky='EW')
+        u.saveVar = Tkinter.StringVar()
+        u.label2Var.set(u"Save Directory")
+        u.saveVarEntry = Tkinter.Entry(u,textvariable=u.saveVar)
+        u.saveVarEntry.grid(column=0,row=6,columnspan=2,sticky='EW')
+
+        self.saveVarEntry = u.saveVarEntry.get()
+
+        u.button = Tkinter.Button(u,text=u"Syncronize!", command=self.initializeSuccess)
+        u.button.grid(column=0,row=8)
+
+
+
+
 
     def OnPressEnter(self, event):
         tempName = self.nameEntry.get()
@@ -97,7 +137,9 @@ class simpleapp_tk(Tkinter.Tk):
         t.label.grid(column=1,row=1,columnspan=2,sticky='EW')
         t.labelVar.set(u"Invalid Username and Password")
 
+
     def initializeSuccess(self):
+        sync.fullsyncronize(self.watchDir, self.nameEntry.get(), self.saveVarEntry)
         l = Tkinter.Toplevel()
         l.minsize(400,400)
         l.maxsize(600,600)
@@ -122,19 +164,16 @@ class simpleapp_tk(Tkinter.Tk):
         l.listbox2 = Tkinter.Listbox(l)
         l.listbox2.grid(column=11, row=1, columnspan=20, rowspan=10, sticky='EW')
 
-
-
-
-
         l.button = Tkinter.Button(l, text=u"Syncronize", command=self.syncronize)
         l.button.grid(column=0,row=12)
 
 
     def syncronize(self):
-
         #Dont quite know the path names but this will do for now
-        sync.fullSync("path", self.nameEntry.get(), "path")
+      #  sync.fullSync(self.watchDir, self.nameEntry.get(), self.saveDir)
         #add logic for syncronizing and updating
+        print ""
+
 
     def regWindow(self):
         o = Tkinter.Toplevel()
@@ -144,6 +183,8 @@ class simpleapp_tk(Tkinter.Tk):
         o.nameVariable = Tkinter.StringVar()
         o.passwordVariable = Tkinter.StringVar()
         o.passwordConfirm = Tkinter.StringVar()
+        o.watchDirectory = Tkinter.StringVar()
+        o.saveDir = Tkinter.StringVar()
 
         o.nameEntry = Tkinter.Entry(o, textvariable=o.nameVariable)
         o.nameEntry.bind("<Return>",self.RegEnter)
@@ -151,10 +192,10 @@ class simpleapp_tk(Tkinter.Tk):
         o.passwordEntry.bind("<Return>",self.RegEnter)
         o.confirmpasswordEntry = Tkinter.Entry(o, textvariable=o.passwordConfirm, show='*')
         o.confirmpasswordEntry.bind("<Return>",self.RegEnter)
-
         o.nameEntry.grid(column=0,row=1,sticky='EW')
         o.passwordEntry.grid(column=0,row=3,sticky='EW')
         o.confirmpasswordEntry.grid(column=0,row=5,sticky='EW')
+
 
         o.labelVariable2 = Tkinter.StringVar()
         label2 = Tkinter.Label(o,textvariable=o.labelVariable2,
