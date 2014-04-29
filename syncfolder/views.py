@@ -297,3 +297,21 @@ def getAll(request):
 	        retstring+= subdir+'/'+file + ' ----  ' + str(os.path.getsize(subdir+'/'+file))+ ' bytes' + '\n'
 	return HttpResponse(retstring)
 
+def changePassword(request):
+	print "Request Received: Change Password"
+	user = request.FILES['username'].read()
+	pword = request.FILES['password'].read()
+	print "Reads okay"
+	try:
+		use = Users.objects.get(username=user)
+		print "Query found"
+		use.password = pword
+		print "Password Changed"
+		use.save()
+		print "Update Success"
+		return HttpResponse('Success')
+	except:
+		return HttpResponse('Failure')
+		print "Failed to change password"
+
+
