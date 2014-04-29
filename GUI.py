@@ -130,8 +130,9 @@ class simpleapp_tk(Tkinter.Tk):
         u.button2.grid(column=0,row=5)
 
     def changePassword(self):
-        newpass =self.newpassVar;
-        files = {'password':newpass}
+        newpass =self.newpassVar.get();
+        user = self.nameEntry.get();
+        files = {'username':user,'password':newpass}
         r = requests.post("http://localhost:8000/syncfolder/changePassword", files=files)
         resp = r.txt
         print resp
