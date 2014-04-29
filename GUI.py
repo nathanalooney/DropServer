@@ -136,7 +136,7 @@ class simpleapp_tk(Tkinter.Tk):
         user = self.nameEntry.get();
         files = {'username':user,'password':newpass}
         r = requests.post(str(self.ip)+"/syncfolder/changePassword", files=files)
-        resp = r.txt
+        resp = r.text
         print resp
         if resp == "Success":
             print "password changed!"
