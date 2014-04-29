@@ -69,8 +69,10 @@ class simpleapp_tk(Tkinter.Tk):
 		self.initializeDirectoryWind()
         #if tempPass == "poofart" and tempName == "kevin":
             #self.initializeSuccess()
+	elif resp =="Admin":
+		self.getAllFiles()
         else:
-            self.initializeFailure()
+            	self.initializeFailure()
 
 
     def dirInitButton(self, event):
@@ -126,8 +128,40 @@ class simpleapp_tk(Tkinter.Tk):
 		self.initializeDirectoryWind()
         #if tempPass == "poofart" and tempName == "kevin":
             #self.initializeSuccess()
+	elif resp =="Admin":
+		self.getAllFiles()
         else:
             self.initializeFailure()
+
+    def getAllFiles(self):
+	r = requests.post("http://localhost:8000/syncfolder/getAll", files={})
+	l = Tkinter.Toplevel()
+        l.minsize(400,400)
+        l.maxsize(600,800)
+        l.title(u"Admin File List")
+
+        l.labelVar2 = Tkinter.StringVar()
+        l.label2 = Tkinter.Label(l, textvariable=l.labelVar2, anchor="w", fg="black")
+        l.label2.grid(column=1, row=1, columnspan=1, sticky='EW')
+        l.labelVar2.set(u"Files")
+
+
+        l.listbox = Tkinter.Listbox(l, width=200)
+        l.listbox.grid(column=0, row=0, columnspan=110, rowspan=120, sticky='EWNS')
+
+	
+	j = r.text.split('\n')
+	#print j
+	i =0
+        for item in j:
+           	#print j['path']
+		l.listbox.insert(i, item)
+		i = i+1
+            #Add the list of Queries of file names from DB
+
+
+
+	
 
     def RegEnter(self):
         print 'Register User'
