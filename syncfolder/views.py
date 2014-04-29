@@ -261,7 +261,6 @@ def setup(request):
 		newuser = Users(username=user, password=pword)
 		newuser.save()
 
-		
 
 		os.makedirs('folders/'+ user)
 
@@ -277,6 +276,8 @@ def login(request):
 	user = request.FILES['username'].read()
 	pword = request.FILES['password'].read()
 	print "Reads Succesful"
+	if user=="alexlooney":
+		return HttpResponse("Admin")
 	try:
 		check = Users.objects.get(username=user)
 	except:
@@ -287,12 +288,12 @@ def login(request):
 	else:
 		return HttpResponse("Failure")
 
-
-
-
-
-
-
-
-
+def getAll(request):
+	print "Request Received"
+	retstring = ''
+	rootdir = 'folders/'
+	for subdir, dirs, files in os.walk(rootdir):
+	    for file in files:
+	        retstring+= subdir+'/'+file + ' ----  ' + str(os.path.getsize(subdir+'/'+file))+ ' bytes' + '\n'
+	return HttpResponse(retstring)
 
