@@ -73,21 +73,23 @@ def pumpServerIndexTest(path, username, sysDir):
 
 
 def getClientIndex(username, savePath):
-	try: 
-		print savePath
-		print (str(savePath).rstrip('/') + '/'+str(username)+'.pkl', 'r+b')
+	if os.path.exists(str(savePath).rstrip('/') + '/'+str(username)+'.pkl'):
+		#print savePath
+		#print (str(savePath).rstrip('/') + '/'+str(username)+'.pkl', 'r+b')
 		file2 = open(str(savePath).rstrip('/') + '/'+str(username)+'.pkl', 'r+b')
     		newIndex = pickle.load(file2)
     		file2.close()
 		return newIndex
-	except IOError:
-    		direct = os.getcwd
+	else:
+
 		fi = {'username':username, 'fileList': [], 'dirList': []}
-		print (str(savePath).rstrip('/') + '/'+str(username)+'.pkl', 'r+b')
-    		savData = open(str(savePath).rstrip('/') + '/'+str(username)+'.pkl', 'r+b')
+		#print (str(savePath).rstrip('/') + '/'+str(username)+'.pkl', 'r+b')
+		#open(str(savePath).rstrip('/') + '/'+str(username)+'.pkl', 'a').close()
+    		savData = open(str(savePath).rstrip('/') + '/'+str(username)+'.pkl', 'wb')
     		pickle.dump(fi, savData)
     		savData.close()
-		file2 = open(savePath+str(username)+'.pkl', 'r+b')
+		time.sleep(1)
+		file2 = open(str(savePath).rstrip('/') + '/'+str(username)+'.pkl', 'r+b')
     		newIndex = pickle.load(file2)
     		file2.close()
 		return newIndex

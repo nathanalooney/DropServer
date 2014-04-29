@@ -23,10 +23,10 @@ class simpleapp_tk(Tkinter.Tk):
         self.nameVariable = Tkinter.StringVar()
         self.passwordVariable = Tkinter.StringVar()
         self.nameEntry = Tkinter.Entry(self,textvariable=self.nameVariable)
-        self.nameEntry.bind("<Return>", self.dirInitButton)
+        self.nameEntry.bind("<Return>", self.OnPressEnter)
 
         self.passwordEntry = Tkinter.Entry(self, textvariable=self.passwordVariable, show='*')
-        self.passwordEntry.bind("<Return>", self.dirInitButton)
+        self.passwordEntry.bind("<Return>", self.OnPressEnter)
         self.nameEntry.grid(column=0,row=1,sticky='EW')
         self.passwordEntry.grid(column=0,row=3,sticky='EW')
 
@@ -57,13 +57,18 @@ class simpleapp_tk(Tkinter.Tk):
 
 
     def OnButtonClick(self):
+	print 'Enter'
         tempName = self.nameEntry.get()
         tempPass = self.passwordEntry.get()
-
-        #logic for validation and server requests
-        if tempPass == "poofart" and tempName == "lala":
-            self.initializeDirectoryWind()
-
+	files = {'username': tempName, 'password': tempPass}
+        #Logic for server requests and in validation
+	r = requests.post("http://localhost:8000/syncfolder/login", files=files)
+	resp = r.text
+	print resp
+	if resp == "Success":
+		self.initializeDirectoryWind()
+        #if tempPass == "poofart" and tempName == "kevin":
+            #self.initializeSuccess()
         else:
             self.initializeFailure()
 
@@ -109,20 +114,30 @@ class simpleapp_tk(Tkinter.Tk):
 
 
     def OnPressEnter(self, event):
+	print 'Enter'
         tempName = self.nameEntry.get()
         tempPass = self.passwordEntry.get()
-
+	files = {'username': tempName, 'password': tempPass}
         #Logic for server requests and in validation
-
-        if tempPass == "poofart" and tempName == "kevin":
-            self.initializeSuccess()
-
-
+	r = requests.post("http://localhost:8000/syncfolder/login", files=files)
+	resp = r.text
+	print resp
+	if resp == "Success":
+		self.initializeDirectoryWind()
+        #if tempPass == "poofart" and tempName == "kevin":
+            #self.initializeSuccess()
         else:
             self.initializeFailure()
 
     def RegEnter(self):
-        print "hi"
+        print 'Register User'
+	files = {'username': str(self.nameEntry.get()), 'password': str(self.passwordEntry.get())}
+	r = requests.post("http://localhost:8000/syncfolder/setup", files=files)
+	if r.text == "Success":
+		print 'Success'
+		self.initializeDirectoryWind()
+	else:
+		self.initializeRegFailure()
 
 
     def OnButtonClick2(self):
@@ -139,10 +154,21 @@ class simpleapp_tk(Tkinter.Tk):
         t.label.grid(column=1,row=1,columnspan=2,sticky='EW')
         t.labelVar.set(u"Invalid Username and Password")
 
+    def initializeRegFailure(self):
+        t = Tkinter.Toplevel()
+        t.title("Warning")
+        t.minsize(175,50)
+        t.maxsize(175,50)
+        t.labelVar = Tkinter.StringVar()
+        t.label = Tkinter.Label(t, textvariable=t.labelVar,  anchor="w",fg="black")
+        t.label.grid(column=1,row=1,columnspan=2,sticky='EW')
+        t.labelVar.set(u"Failure: Username Exists")
+
+
 
     def initializeSuccess(self):
 	print self.nameEntry.get()
-	print self.saveVarEntry
+	print self.saveVarEntry.get()
         sync.fullSync(self.WatchEntry.get(), self.nameEntry.get(), self.saveVarEntry.get())
         l = Tkinter.Toplevel()
         l.minsize(400,400)
@@ -155,11 +181,16 @@ class simpleapp_tk(Tkinter.Tk):
 
         l.labelVar2 = Tkinter.StringVar()
         l.label2 = Tkinter.Label(l, textvariable=l.labelVar2, anchor="w", fg="black")
-        l.label2.grid(column=1, row=0, columnspan=1, sticky='EW')
-        l.labelVar.set(u"Files")
+        l.label2.grid(column=1, row=1, columnspan=1, sticky='EW')
+        l.labelVar2.set(u"Files")
+
+        l.labelVar3 = Tkinter.StringVar()
+        l.label3 = Tkinter.Label(l, textvariable=l.labelVar3, anchor="w", fg="black")
+        l.label3.grid(column=2, row=1, columnspan=1, sticky='EW')
+        l.labelVar3.set(u"Directories")
 
         l.listbox = Tkinter.Listbox(l)
-        l.listbox.grid(column=0, row=1, columnspan=10, rowspan=6, sticky='EW')
+        l.listbox.grid(column=0, row=2, columnspan=10, rowspan=6, sticky='EW')
 	
         k = ["look", "I am ", "adding to", "the listbox"]
 	j = sync.getClientIndex(self.nameEntry.get(), self.saveVarEntry.get())
@@ -172,14 +203,14 @@ class simpleapp_tk(Tkinter.Tk):
             #Add the list of Queries of file names from DB
 
         l.listbox2 = Tkinter.Listbox(l)
-        l.listbox2.grid(column=11, row=1, columnspan=20, rowspan=10, sticky='EW')
+        l.listbox2.grid(column=11, row=2, columnspan=20, rowspan=10, sticky='EW')
 
         l.button = Tkinter.Button(l, text=u"Syncronize", command=self.syncronize)
         l.button.grid(column=0,row=12)
 	i =0
         for item in j['dirList']:
            	#print j['path']
-		l.listbox.insert(i, item['path'])
+		l.listbox2.insert(i, item['path'])
 		i = i+1
 
     def syncronize(self):
@@ -194,20 +225,20 @@ class simpleapp_tk(Tkinter.Tk):
         o.minsize(300,200)
         o.maxsize(600,400)
         o.title("Registration")
-        o.nameVariable = Tkinter.StringVar()
-        o.passwordVariable = Tkinter.StringVar()
+        self.nameVariable = Tkinter.StringVar()
+        self.passwordVariable = Tkinter.StringVar()
         o.passwordConfirm = Tkinter.StringVar()
         o.watchDirectory = Tkinter.StringVar()
         o.saveDir = Tkinter.StringVar()
 
-        o.nameEntry = Tkinter.Entry(o, textvariable=o.nameVariable)
-        o.nameEntry.bind("<Return>",self.RegEnter)
-        o.passwordEntry = Tkinter.Entry(o, textvariable=o.passwordVariable, show='*')
-        o.passwordEntry.bind("<Return>",self.RegEnter)
+        self.nameEntry = Tkinter.Entry(o, textvariable=self.nameVariable)
+        self.nameEntry.bind("<Return>",self.RegEnter)
+        self.passwordEntry = Tkinter.Entry(o, textvariable=self.passwordVariable, show='*')
+        self.passwordEntry.bind("<Return>",self.RegEnter)
         o.confirmpasswordEntry = Tkinter.Entry(o, textvariable=o.passwordConfirm, show='*')
         o.confirmpasswordEntry.bind("<Return>",self.RegEnter)
-        o.nameEntry.grid(column=0,row=1,sticky='EW')
-        o.passwordEntry.grid(column=0,row=3,sticky='EW')
+        self.nameEntry.grid(column=0,row=1,sticky='EW')
+        self.passwordEntry.grid(column=0,row=3,sticky='EW')
         o.confirmpasswordEntry.grid(column=0,row=5,sticky='EW')
 
 
@@ -235,7 +266,16 @@ class simpleapp_tk(Tkinter.Tk):
 
 
     def OnButtonClickReg(self):
-        print"Im chillin big brother Im chillin"
+	print 'Register User'
+	files = {'username': str(self.nameEntry.get()), 'password': str(self.passwordEntry.get())}
+	r = requests.post("http://localhost:8000/syncfolder/setup", files=files)
+	if r.text == "Success":
+		print 'Success'
+		self.initializeDirectoryWind()
+	else:
+		self.initializeRegFailure()
+	
+        #print"Im chillin big brother Im chillin"
         #Enter logic for checking to see if in DB and also add to db;
         #also validate password logic and
 
