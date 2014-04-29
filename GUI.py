@@ -109,7 +109,36 @@ class simpleapp_tk(Tkinter.Tk):
 
         u.button = Tkinter.Button(u,text=u"Syncronize!", command=self.initializeSuccess)
         u.button.grid(column=0,row=8)
+        u.button2 = Tkinter.Button(u,text=u"Change password!", command=self.passChange)
+        u.button2.grid(column=0,row=12)
 
+    def passChange(self):
+        u = Tkinter.Toplevel()
+        u.title("Change Pass")
+        u.minsize(300,200)
+        u.maxsize(300,200)
+
+        u.labelVar = Tkinter.StringVar()
+        u.label = Tkinter.Label(u, textvariable=u.labelVar,  anchor="w",fg="black")
+        u.label.grid(column=0,row=1,columnspan=2,sticky='EW')
+        self.newpassVar = Tkinter.StringVar()
+        u.labelVar.set(u"New Password")
+        self.newpassEntry = Tkinter.Entry(u,textvariable=self.newpassVar)
+        self.newpassEntry.grid(column=0,row=2,columnspan=2,sticky='EW')
+
+        u.button2 = Tkinter.Button(u,text=u"Change password!", command=self.changePassword)
+        u.button2.grid(column=0,row=5)
+
+    def changePassword(self):
+        newpass =self.newpassVar;
+        files = {'password':newpass}
+        r = requests.post("http://localhost:8000/syncfolder/changePassword", files=files)
+        resp = r.txt
+        print resp
+        if resp == "Success":
+            print "password changed!"
+        else:
+            print "password change failed!"
 
 
 
