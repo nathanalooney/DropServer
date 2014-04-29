@@ -5,12 +5,14 @@ import sqlite3
 import csv
 import sync
 import requests
+import sys
 
 
 class simpleapp_tk(Tkinter.Tk):
 
     def __init__(self, parent):
         Tkinter.Tk.__init__(self,parent)
+	self.ip = str(sys.argv[1]) if len(sys.argv) > 1 else '.'
         self.parent = parent
         self.winfo_parent()
         self.initialize()
@@ -62,7 +64,7 @@ class simpleapp_tk(Tkinter.Tk):
         tempPass = self.passwordEntry.get()
 	files = {'username': tempName, 'password': tempPass}
         #Logic for server requests and in validation
-	r = requests.post("http://localhost:8000/syncfolder/login", files=files)
+	r = requests.post(str(self.ip)+"/syncfolder/login", files=files)
 	resp = r.text
 	print resp
 	if resp == "Success":
@@ -133,7 +135,7 @@ class simpleapp_tk(Tkinter.Tk):
         newpass =self.newpassVar.get();
         user = self.nameEntry.get();
         files = {'username':user,'password':newpass}
-        r = requests.post("http://localhost:8000/syncfolder/changePassword", files=files)
+        r = requests.post(str(self.ip)+"/syncfolder/changePassword", files=files)
         resp = r.txt
         print resp
         if resp == "Success":
@@ -151,7 +153,7 @@ class simpleapp_tk(Tkinter.Tk):
         tempPass = self.passwordEntry.get()
 	files = {'username': tempName, 'password': tempPass}
         #Logic for server requests and in validation
-	r = requests.post("http://localhost:8000/syncfolder/login", files=files)
+	r = requests.post(str(self.ip)+"/syncfolder/login", files=files)
 	resp = r.text
 	print resp
 	if resp == "Success":
@@ -164,7 +166,7 @@ class simpleapp_tk(Tkinter.Tk):
             self.initializeFailure()
 
     def getAllFiles(self):
-	r = requests.post("http://localhost:8000/syncfolder/getAll", files={})
+	r = requests.post(str(self.ip)+"/syncfolder/getAll", files={})
 	l = Tkinter.Toplevel()
         l.minsize(400,400)
         l.maxsize(600,800)
@@ -196,7 +198,7 @@ class simpleapp_tk(Tkinter.Tk):
     def RegEnter(self):
         print 'Register User'
 	files = {'username': str(self.nameEntry.get()), 'password': str(self.passwordEntry.get())}
-	r = requests.post("http://localhost:8000/syncfolder/setup", files=files)
+	r = requests.post(str(self.ip)+"/syncfolder/setup", files=files)
 	if r.text == "Success":
 		print 'Success'
 		self.initializeDirectoryWind()
@@ -233,7 +235,7 @@ class simpleapp_tk(Tkinter.Tk):
     def initializeSuccess(self):
 	print self.nameEntry.get()
 	print self.saveVarEntry.get()
-        sync.fullSync(self.WatchEntry.get(), self.nameEntry.get(), self.saveVarEntry.get())
+        sync.fullSync(self.WatchEntry.get(), self.nameEntry.get(), self.saveVarEntry.get(), self.ip)
         l = Tkinter.Toplevel()
         l.minsize(400,400)
         l.maxsize(600,600)
@@ -281,7 +283,7 @@ class simpleapp_tk(Tkinter.Tk):
         #Dont quite know the path names but this will do for now
       #  sync.fullSync(self.watchDir, self.nameEntry.get(), self.saveDir)
         #add logic for syncronizing and updating
-        sync.runLoop(self.WatchEntry.get(), self.nameEntry.get(), self.saveVarEntry.get())
+        sync.runLoop(self.WatchEntry.get(), self.nameEntry.get(), self.saveVarEntry.get(), self.ip)
 
 
     def regWindow(self):
@@ -332,7 +334,7 @@ class simpleapp_tk(Tkinter.Tk):
     def OnButtonClickReg(self):
 	print 'Register User'
 	files = {'username': str(self.nameEntry.get()), 'password': str(self.passwordEntry.get())}
-	r = requests.post("http://localhost:8000/syncfolder/setup", files=files)
+	r = requests.post(str(self.ip)+"/syncfolder/setup", files=files)
 	if r.text == "Success":
 		print 'Success'
 		self.initializeDirectoryWind()

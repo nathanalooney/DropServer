@@ -98,9 +98,9 @@ def createDeleteList(clientIndex):
 			clientIndex['fileList'].remove(f)
 	return {'fileDeleteList': fileDeleteList, 'dirDeleteList': dirDeleteList}
 
-def getServerIndex(username, savePath):
+def getServerIndex(username, savePath, ip):
 	msg = {'username': username}
-	r = requests.post('http://localhost:8000/syncfolder/getServerIndex', files = msg)
+	r = requests.post(str(ip)+'/syncfolder/getServerIndex', files = msg)
 	with open(savePath+str(username)+'Server'+'.pkl', 'wb') as f:
 		for chunk in r.iter_content(chunk_size=1024):
 			if chunk:
@@ -163,7 +163,8 @@ def clientServerCompare(clientIndex, serverIndex, fileDeleteList, dirDeleteList,
 	for f in clientIndex['fileList']:	
 		ff = next((item for item in serverIndex['fileList'] if item['ID'] == f['ID']),None)
 		if ff is None:
-			os.remove(f['path'])
+			if os.path.exists(f['path']):
+				os.remove(f['path'])
 			clientIndex['fileList'].remove(f)
 	for d in clientIndex['dirList']:	
 		dd = next((item for item in serverIndex['dirList'] if item['ID'] == d['ID']),None)
@@ -172,7 +173,7 @@ def clientServerCompare(clientIndex, serverIndex, fileDeleteList, dirDeleteList,
 				os.rmdir(d['path'])
 				clientIndex['dirList'].remove(d)
 			except OSError:
-				print ' '
+				i = 0
 	for d in dcreatelist:
 		d['ID'] = str(int(largeID) + 1)
 		clientIndex['dirList'].append({'ID':d['ID'], 'path': d['path']})
@@ -187,35 +188,35 @@ def clientServerCompare(clientIndex, serverIndex, fileDeleteList, dirDeleteList,
 	return clientPullList
 
 
-def sendPosts(clientIndex, clientPullList, fileDeleteList, dirDeleteList, updatelist, dcreatelist, fcreatelist, username, path):
+def sendPosts(clientIndex, clientPullList, fileDeleteList, dirDeleteList, updatelist, dcreatelist, fcreatelist, username, path, ip):
 	q = []
 	for p in clientPullList:
 		ff = next((item for item in clientIndex['fileList'] if item['ID'] == p),None)
 		msg = {'username': username, 'ID': str(p)}
-		pullFilePost(msg, ff['path'])
+		pullFilePost(msg, ff['path'], ip)
 		
 	for d in fileDeleteList:
 		msg = {'username': username, 'ID': str(d)}
-		fileDeletePost(msg)
+		fileDeletePost(msg, ip)
 	for d in dirDeleteList:
 		msg = {'username': username, 'ID': str(d)}
-		dirDeletePost(msg)
+		dirDeletePost(msg, ip)
 	for u in updatelist:
 		sendPath = stripBase(path, u['path'])
 		msg = {'username': username, 'ID': str(u['ID']), 'path': sendPath, 'time': str(u['time'])} 
-		updatePost(msg, u['path'])
+		updatePost(msg, u['path'], ip)
 	for dc in dcreatelist:
 		sendPath = stripBase(path, dc['path'])
 		msg = {'username': username, 'ID': str(dc['ID']), 'path': sendPath}
-		dirCreatePost(msg)
+		dirCreatePost(msg, ip)
 	for fc in fcreatelist:
 		sendPath = stripBase(path, fc['path'])
 		msg = {'username': username, 'ID': str(fc['ID']), 'path': sendPath, 'time': str(fc['time'])}
-		fileCreatePost(msg, fc['path'])
+		fileCreatePost(msg, fc['path'], ip)
 
 	
-def pullFilePost(msg, path):
-	r = requests.post('http://localhost:8000/syncfolder/pull', files = msg)
+def pullFilePost(msg, path, ip):
+	r = requests.post(str(ip)+'/syncfolder/pull', files = msg)
 	with open(path, 'wb') as f:
 		for chunk in r.iter_content(chunk_size=1024):
 			if chunk:
@@ -223,29 +224,31 @@ def pullFilePost(msg, path):
 				f.flush()
 
 
-def fileDeletePost(msg):
-	r = requests.post('http://localhost:8000/syncfolder/fileDelete', files = msg)
+def fileDeletePost(msg, ip):
+	r = requests.post(str(ip)+'/syncfolder/fileDelete', files = msg)
 
 
-def dirDeletePost(msg):
-	r = requests.post('http://localhost:8000/syncfolder/dirDelete', files = msg)
+def dirDeletePost(msg, ip):
+	r = requests.post(str(ip)+'/syncfolder/dirDelete', files = msg)
 
 
-def updatePost(msg, fullPath):
-	msg['file'] = open(fullPath, 'rb')
-	r = requests.post('http://localhost:8000/syncfolder/update', files = msg)
+def updatePost(msg, fullPath, ip):
+	if os.path.exists(str(fullPath)):
+		msg['file'] = open(fullPath, 'rb')
+		r = requests.post(str(ip)+'/syncfolder/update', files = msg)
 	
 
-def dirCreatePost(msg):
-	r = requests.post('http://localhost:8000/syncfolder/dirCreate', files = msg)
+def dirCreatePost(msg, ip):
+	r = requests.post(str(ip)+'/syncfolder/dirCreate', files = msg)
 	
 
-def fileCreatePost(msg, fullPath):
-	msg['file'] = open(fullPath, 'rb')
-	r = requests.post('http://localhost:8000/syncfolder/fileCreate', files = msg)
+def fileCreatePost(msg, fullPath, ip):
+	if os.path.exists(str(fullPath)):
+		msg['file'] = open(fullPath, 'rb')
+		r = requests.post(str(ip)+'/syncfolder/fileCreate', files = msg)
 	
 
-def fullSync(path, username, savePath):
+def fullSync(path, username, savePath, ip):
 	systemDir = getSystemDir(path)
 	clientIndex = getClientIndex(username, savePath)
 	deleteList = createDeleteList(clientIndex)
@@ -253,9 +256,9 @@ def fullSync(path, username, savePath):
 	fileDeleteList = deleteList['fileDeleteList']
 	dirDeleteList = deleteList['dirDeleteList']
 	lists = systemClientCompare(clientIndex, systemDir)
-	serverIndex = getServerIndex(username, savePath)
+	serverIndex = getServerIndex(username, savePath, ip)
 	pullList = clientServerCompare(clientIndex, serverIndex, fileDeleteList, dirDeleteList, lists['updatelist'], lists['dcreatelist'], lists['fcreatelist'], path, savePath, username)
-	sendPosts(clientIndex, pullList, fileDeleteList, dirDeleteList, lists['updatelist'], lists['dcreatelist'], lists['fcreatelist'], username, path)
+	sendPosts(clientIndex, pullList, fileDeleteList, dirDeleteList, lists['updatelist'], lists['dcreatelist'], lists['fcreatelist'], username, path, ip)
 	saveClientIndex(clientIndex, username, savePath)
 	
 def stripBase(basePath, objectPath):
@@ -264,7 +267,7 @@ def stripBase(basePath, objectPath):
 
 def purgeList(savePath, username):
 	print 'Purging: ' + savePath+str(username)+'.pkl'
-	file2 = open(savePath+str(username)+'.pkl', 'rb')
+	file2 = open(savePath+str(username)+'.pkl', 'r+b')
     	index = pickle.load(file2)
     	file2.close()
 	for f in index['fileList']:
@@ -272,15 +275,15 @@ def purgeList(savePath, username):
 	for d in index['dirList']:
 		index['dirList'].remove(d)
 	print index
-	savData = open(savePath+str(username)+'.pkl', 'rb')
+	savData = open(savePath+str(username)+'.pkl', 'r+b')
     	pickle.dump(index, savData)
     	savData.close()	
 		
 
-def runLoop(path, username, savePath):
+def runLoop(path, username, savePath, ip):
 	try:
 		while True:
-			fullSync(path, username, savePath)
+			fullSync(path, username, savePath, ip)
      			time.sleep(1)
 
 	except KeyboardInterrupt:
@@ -289,18 +292,24 @@ def runLoop(path, username, savePath):
 				
 if __name__ == "__main__":
 			
+	
+	#username = raw_input("Enter Username: ")
+	username = 'kb'
+	#path = raw_input("Enter Watched directory: ")
+	path = '/home/student/html'
+	#savePath = raw_input("Enter saveData path: ")
+	savePath = '/home/student/save/'
 
-	username = raw_input("Enter Username: ")
-	#username = 'kevin'
-	path = raw_input("Enter Watched directory: ")
-	#path = '/home/student/html'
-	savePath = raw_input("Enter saveData path: ")
-	#savePath = '/home/student/saveData2/'
-	try:
-		while True:
-			fullSync(path, username, savePath)
+	purgeList(savePath, username)
+	savePath = '/home/student/save2/'
+	purgeList(savePath, username)
+	#savePath = '/home/student/dropserver/fileIndexes/'
+	#purgeList(savePath, username)
+	#try:
+		#while True:
+			#fullSync(path, username, savePath)
      			#time.sleep(1)
 
-	except KeyboardInterrupt:
-        	print 'Turn syncronize on? [y/n] '
-		time.sleep(1)
+	#except KeyboardInterrupt:
+        	#print 'Turn syncronize on? [y/n] '
+		#time.sleep(1)
