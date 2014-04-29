@@ -217,6 +217,7 @@ def sendPosts(clientIndex, clientPullList, fileDeleteList, dirDeleteList, update
 	
 def pullFilePost(msg, path, ip):
 	r = requests.post(str(ip)+'/syncfolder/pull', files = msg)
+	#if os.path.exists(str(path)):
 	with open(path, 'wb') as f:
 		for chunk in r.iter_content(chunk_size=1024):
 			if chunk:
@@ -296,12 +297,12 @@ if __name__ == "__main__":
 	#username = raw_input("Enter Username: ")
 	username = 'kb'
 	#path = raw_input("Enter Watched directory: ")
-	path = '/home/student/html'
+	path = '/home/student/kS'
 	#savePath = raw_input("Enter saveData path: ")
-	savePath = '/home/student/save/'
+	savePath = '/home/student/kS/'
 
 	purgeList(savePath, username)
-	savePath = '/home/student/save2/'
+	savePath = '/home/student/kevinS/'
 	purgeList(savePath, username)
 	#savePath = '/home/student/dropserver/fileIndexes/'
 	#purgeList(savePath, username)
