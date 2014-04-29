@@ -305,11 +305,4 @@ if __name__ == "__main__":
 	purgeList(savePath, username)
 	#savePath = '/home/student/dropserver/fileIndexes/'
 	#purgeList(savePath, username)
-	#try:
-		#while True:
-			#fullSync(path, username, savePath)
-     			#time.sleep(1)
-
-	#except KeyboardInterrupt:
-        	#print 'Turn syncronize on? [y/n] '
-		#time.sleep(1)
+	
