@@ -1,5 +1,3 @@
-__author__ = 'Rahim'
-
 import Tkinter
 import sqlite3
 import csv

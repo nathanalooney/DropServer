@@ -1,4 +1,4 @@
-__author__ = 'Kevin'
+__author__ = 'Nathan'
 
 #TODO fix file paths - all in client absolute right now
 # figure out exactly how to do the savepath

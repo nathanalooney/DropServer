@@ -8,18 +8,9 @@ import requests
 import pickle
 from models import Users
 
-
-
-
-
-
-
 # Create your views here.
 def index(request):
 	return HttpResponse("<h1> Index </h1>")
-
-
-
 
 def fileCreate(request):
 
